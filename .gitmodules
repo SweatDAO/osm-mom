@@ -3,4 +3,4 @@
 	url = https://github.com/dapphub/ds-test
 [submodule "lib/osm"]
 	path = lib/osm
-	url = https://github.com/makerdao/osm
+	url = https://github.com/sweatdao/osm
