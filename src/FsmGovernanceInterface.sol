@@ -1,4 +1,4 @@
-/// OsmMom -- governance interface for the OSM
+/// FsmMom -- governance interface for oracle security modules
 
 // Copyright (C) 2019 Maker Ecosystem Growth Holdings, INC.
 //
@@ -17,7 +17,7 @@
 
 pragma solidity 0.5.15;
 
-contract OsmLike {
+contract FsmLike {
     function stop() external;
 }
 
@@ -25,7 +25,7 @@ contract AuthorityLike {
     function canCall(address src, address dst, bytes4 sig) public view returns (bool);
 }
 
-contract OsmMom {
+contract FsmGovernanceInterface {
     event LogNote(
         bytes4   indexed  sig,
         address  indexed  usr,
@@ -34,7 +34,7 @@ contract OsmMom {
         bytes             data
     ) anonymous;
 
-    modifier note {
+    modifier emitLog {
         _;
         assembly {
             // log an 'anonymous' event with a constant 6 words of calldata
@@ -54,14 +54,14 @@ contract OsmMom {
     }
 
     address public owner;
-    modifier onlyOwner { require(msg.sender == owner, "osm-mom/only-owner"); _;}
+    modifier onlyOwner { require(msg.sender == owner, "fsm-governance-interface/only-owner"); _;}
 
     address public authority;
-    modifier auth {
-        require(isAuthorized(msg.sender, msg.sig), "osm-mom/not-authorized");
+    modifier isAuthorized {
+        require(canCall(msg.sender, msg.sig), "fsm-governance-interface/not-authorized");
         _;
     }
-    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
+    function canCall(address src, bytes4 sig) internal view returns (bool) {
         if (src == address(this)) {
             return true;
         } else if (src == owner) {
@@ -73,25 +73,25 @@ contract OsmMom {
         }
     }
 
-    mapping (bytes32 => address) public osms;
+    mapping (bytes32 => address) public fsms;
 
     constructor() public {
         owner = msg.sender;
     }
 
-    function setOsm(bytes32 ilk, address osm) external note onlyOwner {
-        osms[ilk] = osm;
+    function setFsm(bytes32 collateralType, address fsm) external emitLog onlyOwner {
+        fsms[collateralType] = fsm;
     }
 
-    function setOwner(address owner_) external note onlyOwner {
+    function setOwner(address owner_) external emitLog onlyOwner {
         owner = owner_;
     }
 
-    function setAuthority(address authority_) external note onlyOwner {
+    function setAuthority(address authority_) external emitLog onlyOwner {
         authority = authority_;
     }
 
-    function stop(bytes32 ilk) external note auth {
-        OsmLike(osms[ilk]).stop();
+    function stop(bytes32 collateralType) external emitLog isAuthorized {
+        FsmLike(fsms[collateralType]).stop();
     }
 }

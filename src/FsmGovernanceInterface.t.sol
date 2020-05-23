@@ -17,30 +17,30 @@ pragma solidity 0.5.15;
 
 import "ds-test/test.sol";
 
-import "osm/osm.sol";
-import "./OsmMom.sol";
+import "geb-fsm/OSM.sol";
+import "./FsmGovernanceInterface.sol";
 
-contract OsmMomCaller {
-    OsmMom mom;
+contract FsmGovernanceInterfaceCaller {
+    FsmGovernanceInterface fsmGovernanceInterface;
 
-    constructor(OsmMom mom_) public {
-        mom = mom_;
+    constructor(FsmGovernanceInterface fsmGovernanceInterface_) public {
+        fsmGovernanceInterface = fsmGovernanceInterface_;
     }
 
     function setOwner(address newOwner) public {
-        mom.setOwner(newOwner);
+        fsmGovernanceInterface.setOwner(newOwner);
     }
 
     function setAuthority(address newAuthority) public {
-        mom.setAuthority(newAuthority);
+        fsmGovernanceInterface.setAuthority(newAuthority);
     }
 
-    function setOsm(bytes32 ilk, address osm) public {
-        mom.setOsm(ilk, osm);
+    function setFsm(bytes32 collateralType, address fsm) public {
+        fsmGovernanceInterface.setFsm(collateralType, fsm);
     }
 
-    function stop(bytes32 ilk) public {
-        mom.stop(ilk);
+    function stop(bytes32 collateralType) public {
+        fsmGovernanceInterface.stop(collateralType);
     }
 }
 
@@ -56,31 +56,31 @@ contract SimpleAuthority {
     }
 }
 
-contract OsmMomTest is DSTest {
-    OSM osm;
-    OsmMom mom;
-    OsmMomCaller caller;
+contract FsmGovernanceInterfaceTest is DSTest {
+    OSM fsm;
+    FsmGovernanceInterface fsmGovernanceInterface;
+    FsmGovernanceInterfaceCaller caller;
     SimpleAuthority authority;
 
     function setUp() public {
-        osm = new OSM(address(this));
-        mom = new OsmMom();
-        mom.setOsm("ETH-A", address(osm));
-        caller = new OsmMomCaller(mom);
+        fsm = new OSM(address(this));
+        fsmGovernanceInterface = new FsmGovernanceInterface();
+        fsmGovernanceInterface.setFsm("ETH-A", address(fsm));
+        caller = new FsmGovernanceInterfaceCaller(fsmGovernanceInterface);
         authority = new SimpleAuthority(address(caller));
-        mom.setAuthority(address(authority));
-        osm.rely(address(mom));
+        fsmGovernanceInterface.setAuthority(address(authority));
+        fsm.addAuthorization(address(fsmGovernanceInterface));
     }
 
     function testVerifySetup() public {
-        assertTrue(mom.owner() == address(this));
-        assertTrue(mom.authority() == address(authority));
-        assertEq(osm.wards(address(mom)), 1);
+        assertTrue(fsmGovernanceInterface.owner() == address(this));
+        assertTrue(fsmGovernanceInterface.authority() == address(authority));
+        assertEq(fsm.authorizedAccounts(address(fsmGovernanceInterface)), 1);
     }
 
     function testSetOwner() public {
-        mom.setOwner(address(0));
-        assertTrue(mom.owner() == address(0));
+        fsmGovernanceInterface.setOwner(address(0));
+        assertTrue(fsmGovernanceInterface.owner() == address(0));
     }
 
     function testFailSetOwner() public {
@@ -89,8 +89,8 @@ contract OsmMomTest is DSTest {
     }
 
     function testSetAuthority() public {
-        mom.setAuthority(address(0));
-        assertTrue(mom.authority() == address(0));
+        fsmGovernanceInterface.setAuthority(address(0));
+        assertTrue(fsmGovernanceInterface.authority() == address(0));
     }
 
     function testFailSetAuthority() public {
@@ -98,39 +98,39 @@ contract OsmMomTest is DSTest {
         caller.setAuthority(address(0));
     }
 
-    function testSetOsm() public {
-        mom.setOsm("ETH-B", address(1));
-        assertTrue(mom.osms("ETH-B") == address(1));
+    function testSetFsm() public {
+        fsmGovernanceInterface.setFsm("ETH-B", address(1));
+        assertTrue(fsmGovernanceInterface.fsms("ETH-B") == address(1));
     }
 
-    function testFailSetOsm() public {
+    function testFailSetFsm() public {
         // fails because the caller is not an owner
-        caller.setOsm("ETH-A", address(0));
+        caller.setFsm("ETH-A", address(0));
     }
 
     function testStopAuthorized() public {
         caller.stop("ETH-A");
-        assertEq(osm.stopped(), 1);
+        assertEq(fsm.stopped(), 1);
     }
 
     function testStopOwner() public {
-        mom.stop("ETH-A");
-        assertEq(osm.stopped(), 1);
+        fsmGovernanceInterface.stop("ETH-A");
+        assertEq(fsm.stopped(), 1);
     }
 
     function testFailStopCallerNotAuthorized() public {
         SimpleAuthority newAuthority = new SimpleAuthority(address(this));
-        mom.setAuthority(address(newAuthority));
+        fsmGovernanceInterface.setAuthority(address(newAuthority));
         // fails because the caller is no longer authorized on the mom
         caller.stop("ETH-A");
     }
 
     function testFailStopNoAuthority() public {
-        mom.setAuthority(address(0));
+        fsmGovernanceInterface.setAuthority(address(0));
         caller.stop("ETH-A");
     }
 
-    function testFailIlkWithoutOsm() public {
+    function testFailCollateralTypeWithoutFsm() public {
         caller.stop("DOGE");
     }
 }
