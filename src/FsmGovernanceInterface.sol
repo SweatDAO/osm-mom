@@ -1,4 +1,4 @@
-/// FsmMom -- governance interface for oracle security modules
+/// FsmGovernanceInterface -- governance interface for oracle security modules
 
 // Copyright (C) 2019 Maker Ecosystem Growth Holdings, INC.
 //
@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.5.15;
+pragma solidity ^0.5.15;
 
 contract FsmLike {
     function stop() external;
