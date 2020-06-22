@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.5.15;
+pragma solidity ^0.6.7;
 
 import "ds-test/test.sol";
 
@@ -39,8 +39,8 @@ contract FsmGovernanceInterfaceCaller {
         fsmGovernanceInterface.setFsm(collateralType, fsm);
     }
 
-    function stop(bytes32 collateralType) public {
-        fsmGovernanceInterface.stop(collateralType);
+    function stopFsm(bytes32 collateralType) public {
+        fsmGovernanceInterface.stopFsm(collateralType);
     }
 }
 
@@ -109,12 +109,12 @@ contract FsmGovernanceInterfaceTest is DSTest {
     }
 
     function testStopAuthorized() public {
-        caller.stop("ETH-A");
+        caller.stopFsm("ETH-A");
         assertEq(fsm.stopped(), 1);
     }
 
     function testStopOwner() public {
-        fsmGovernanceInterface.stop("ETH-A");
+        fsmGovernanceInterface.stopFsm("ETH-A");
         assertEq(fsm.stopped(), 1);
     }
 
@@ -122,15 +122,15 @@ contract FsmGovernanceInterfaceTest is DSTest {
         SimpleAuthority newAuthority = new SimpleAuthority(address(this));
         fsmGovernanceInterface.setAuthority(address(newAuthority));
         // fails because the caller is no longer authorized on the mom
-        caller.stop("ETH-A");
+        caller.stopFsm("ETH-A");
     }
 
     function testFailStopNoAuthority() public {
         fsmGovernanceInterface.setAuthority(address(0));
-        caller.stop("ETH-A");
+        caller.stopFsm("ETH-A");
     }
 
     function testFailCollateralTypeWithoutFsm() public {
-        caller.stop("DOGE");
+        caller.stopFsm("DOGE");
     }
 }

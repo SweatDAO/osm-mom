@@ -15,14 +15,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.5.15;
+pragma solidity ^0.6.7;
 
-contract FsmLike {
-    function stop() external;
+abstract contract FsmLike {
+    function stop() virtual external;
 }
 
-contract AuthorityLike {
-    function canCall(address src, address dst, bytes4 sig) public view returns (bool);
+abstract contract AuthorityLike {
+    function canCall(address src, address dst, bytes4 sig) virtual public view returns (bool);
 }
 
 contract FsmGovernanceInterface {
@@ -39,14 +39,14 @@ contract FsmGovernanceInterface {
         assembly {
             // log an 'anonymous' event with a constant 6 words of calldata
             // and four indexed topics: selector, caller, arg1 and arg2
-            let mark := msize                         // end of memory ensures zero
+            let mark := msize()                       // end of memory ensures zero
             mstore(0x40, add(mark, 288))              // update free memory pointer
             mstore(mark, 0x20)                        // bytes type data offset
             mstore(add(mark, 0x20), 224)              // bytes size (padded)
             calldatacopy(add(mark, 0x40), 0, 224)     // bytes payload
             log4(mark, 288,                           // calldata
                  shl(224, shr(224, calldataload(0))), // msg.sig
-                 caller,                              // msg.sender
+                 caller(),                            // msg.sender
                  calldataload(4),                     // arg1
                  calldataload(36)                     // arg2
                 )
@@ -91,7 +91,7 @@ contract FsmGovernanceInterface {
         authority = authority_;
     }
 
-    function stop(bytes32 collateralType) external emitLog isAuthorized {
+    function stopFsm(bytes32 collateralType) external emitLog isAuthorized {
         FsmLike(fsms[collateralType]).stop();
     }
 }
