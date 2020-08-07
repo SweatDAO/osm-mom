@@ -75,23 +75,32 @@ contract FsmGovernanceInterface {
 
     mapping (bytes32 => address) public fsms;
 
+    event SetFsm(bytes32 collateralType, address fsm);
+    event SetOwner(address owner);
+    event SetAuthority(address authority);
+    event StopFsm(bytes32 collateralType);
+
     constructor() public {
         owner = msg.sender;
     }
 
     function setFsm(bytes32 collateralType, address fsm) external emitLog onlyOwner {
         fsms[collateralType] = fsm;
+        emit SetFsm(collateralType, fsm);
     }
 
     function setOwner(address owner_) external emitLog onlyOwner {
         owner = owner_;
+        emit SetOwner(owner);
     }
 
     function setAuthority(address authority_) external emitLog onlyOwner {
         authority = authority_;
+        emit SetAuthority(authority);
     }
 
     function stopFsm(bytes32 collateralType) external emitLog isAuthorized {
         FsmLike(fsms[collateralType]).stop();
+        emit StopFsm(collateralType);
     }
 }
