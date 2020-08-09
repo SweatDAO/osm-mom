@@ -82,6 +82,7 @@ contract FsmGovernanceInterface {
 
     constructor() public {
         owner = msg.sender;
+        emit SetOwner(owner);
     }
 
     function setFsm(bytes32 collateralType, address fsm) external emitLog onlyOwner {
