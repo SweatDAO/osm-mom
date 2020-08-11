@@ -63,7 +63,7 @@ contract FsmGovernanceInterfaceTest is DSTest {
     SimpleAuthority authority;
 
     function setUp() public {
-        fsm = new OSM(address(this));
+        fsm = new OSM(address(0));
         fsmGovernanceInterface = new FsmGovernanceInterface();
         fsmGovernanceInterface.setFsm("ETH-A", address(fsm));
         caller = new FsmGovernanceInterfaceCaller(fsmGovernanceInterface);
