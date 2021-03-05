@@ -26,14 +26,24 @@ abstract contract AuthorityLike {
 }
 
 contract FsmGovernanceInterface {
+    // --- Authorization ---
+    // The owner of the FSM interface
     address public owner;
+    // Modifier that checks if the msg.sender is the owner
     modifier onlyOwner { require(msg.sender == owner, "fsm-governance-interface/only-owner"); _;}
 
+    // The FSM interface authority
     address public authority;
+    // Checks if msg.sender is allowed to call a specific function
     modifier isAuthorized {
         require(canCall(msg.sender, msg.sig), "fsm-governance-interface/not-authorized");
         _;
     }
+    /*
+    * @notice View function that checks whether an address is allowed to call a function
+    * @param src The address for which we check permissions
+    * @param sig The signature of the function to check permissions for
+    */
     function canCall(address src, bytes4 sig) internal view returns (bool) {
         if (src == address(this)) {
             return true;
@@ -46,8 +56,11 @@ contract FsmGovernanceInterface {
         }
     }
 
+    // --- Variables ---
+    // Mapping of collateral types and associated FSMs
     mapping (bytes32 => address) public fsms;
 
+    // --- Events ---
     event SetFsm(bytes32 collateralType, address fsm);
     event SetOwner(address owner);
     event SetAuthority(address authority);
@@ -58,21 +71,37 @@ contract FsmGovernanceInterface {
         emit SetOwner(owner);
     }
 
+    // --- Core Logic ---
+    /*
+    * @notice Whitelist a new FSM for a specific collateral type
+    * @param collateralType The collateral type for which we set a FSM
+    * @param fsm The FSM address to associate with the collateral type
+    */
     function setFsm(bytes32 collateralType, address fsm) external onlyOwner {
         fsms[collateralType] = fsm;
         emit SetFsm(collateralType, fsm);
     }
 
+    /*
+    * @notice Set a new owner in the contract
+    * @param owner_ New owner to set
+    */
     function setOwner(address owner_) external onlyOwner {
         owner = owner_;
         emit SetOwner(owner);
     }
-
+    /*
+    * @notice Set a new authority in the contract
+    * @notice authority_ New authority address
+    */
     function setAuthority(address authority_) external onlyOwner {
         authority = authority_;
         emit SetAuthority(authority);
     }
-
+    /*
+    * @notice Stop a whitelisted FSM
+    * @param collateralType Collateral type whose FSM will be stopped
+    */
     function stopFsm(bytes32 collateralType) external isAuthorized {
         FsmLike(fsms[collateralType]).stop();
         emit StopFsm(collateralType);
